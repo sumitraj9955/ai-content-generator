@@ -42,7 +42,7 @@ function CreateNewContent(props: PROPS) {
       const aiResponseText = await result?.response.text();
 
       setAiOutput(aiResponseText);
-      await SaveInDb(formData, selectedTemplate?.slug, aiResponseText);
+      await SaveInDb(JSON.stringify(formData), selectedTemplate?.slug, aiResponseText);
     } catch (error) {
       console.error('Error generating AI content:', error);
       setAiOutput('An error occurred while generating the content. Please try again.');
@@ -50,18 +50,21 @@ function CreateNewContent(props: PROPS) {
     setLoading(false);
   };
 
-  const SaveInDb = async (formData: any, slug: any, aiResp: string) => {
+  const SaveInDb = async (formData: string, slug: string | undefined, aiResp: string) => {
+    if (!formData || !slug || !aiResp) {
+      console.error('Missing data for saving to DB:', { formData, slug, aiResp });
+      return;
+    }
     try {
       const result = await db.insert(AIOutput).values({
         formData: formData,
         templateSlug: slug,
         aiResponse: aiResp,
-        createdBy: user?.primaryEmailAddress?.emailAddress,
-        createdAt: moment().format('DD/MM/yyyy'),
+        createdBy: user?.id ?? '', // Ensure this matches your schema
+        createdAt: moment().format(), // Ensure this matches your schema
       });
-      console.log(result);
     } catch (error) {
-      console.error('Error saving to database:', error);
+      console.error('Error saving to DB:', error);
     }
   };
 
